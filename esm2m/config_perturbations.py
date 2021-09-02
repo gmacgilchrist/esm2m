@@ -47,11 +47,11 @@ def get_path(variable=None,ppname=None,override=False,experiments=None,timespan=
         
     return paths
 
-def load_exps(variable=None,ppname=None,experiments=None,timespan=None,verbose=False):
+def load_exps(variable=None,ppname=None,override=False,experiments=None,timespan=None,verbose=False):
     '''Assigns data to a dictionary of xarray Datasets corresponding to 
     each experiment'''
     
-    paths = get_path(variable=variable,ppname=ppname,experiments=experiments,timespan=timespan)
+    paths = get_path(variable=variable,ppname=ppname,override=override,experiments=experiments,timespan=timespan)
         
     dd = {}
     for p,path in paths.items():
@@ -60,10 +60,10 @@ def load_exps(variable=None,ppname=None,experiments=None,timespan=None,verbose=F
         dd[p] = xr.open_mfdataset(path)    
     return dd
 
-def dmget_exps(variable=None,ppname=None,experiments=None,timespan=None,verbose=False,wait=True):
+def dmget_exps(variable=None,ppname=None,override=False,experiments=None,timespan=None,verbose=False,wait=True):
     '''Issue dmget for associated netcdf files.'''
     
-    paths = get_path(variable=variable,ppname=ppname,experiments=experiments,timespan=timespan)
+    paths = get_path(variable=variable,ppname=ppname,override=override,experiments=experiments,timespan=timespan)
     
     for p,path in paths.items():
         command = 'dmget '+path+' &'
@@ -73,10 +73,23 @@ def dmget_exps(variable=None,ppname=None,experiments=None,timespan=None,verbose=
             print(command)
         os.system(command)
 
-def load_grid():
-    pp = '/archive/Richard.Slater/Siena/siena_201308_rds-c3-gat-slurm/MOM5_SIS_BLING_CORE2-gat/gfdl.ncrc3-intel16-prod-openmp/pp/'
-    gridpath = pp+'static.nc'
-    return xr.open_dataset(gridpath)
+def load_grid(fromwork=True,z=None,z_i=None):
+    if fromwork:
+        # Load augmented grid saved to work
+        # See notebook save_grid.ipynp
+        gridpath = '/work/gam/projects/bio-pump-timescales/esm2m/data/grid.nc'
+        grid = xr.open_dataset(gridpath)
+    else:
+        pp = '/archive/Richard.Slater/Siena/siena_201308_rds-c3-gat-slurm/MOM5_SIS_BLING_CORE2-gat/gfdl.ncrc3-intel16-prod-openmp/pp/'
+        gridpath = pp+'static.nc'
+        grid = xr.open_dataset(gridpath)
+        if z is not None:
+            grid['dz'] = (z_i.diff('st_edges_ocean')
+                          .rename({'st_edges_ocean':'st_ocean'})
+                          .assign_coords({'st_ocean':z}))
+            grid['volume_t'] = grid['area_t']*grid['dz']
+            
+    return grid
 
 def calc_anom(dd):
     dd['zero'] = dd['_zero']-dd['_gat']
