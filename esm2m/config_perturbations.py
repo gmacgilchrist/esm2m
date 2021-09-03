@@ -14,6 +14,8 @@ def get_path(variable=None,ppname=None,override=False,experiments=None,timespan=
     # Unless experiment is specified, set to all
     if experiments is None:
         experiments = ['','_gat','_zero','_double']
+    if type(experiments)==str:
+        experiments = [experiments]
     # Unless variable is specified, set to all
     if variable is None:
         variable = '*'
@@ -57,7 +59,9 @@ def load_exps(variable=None,ppname=None,override=False,experiments=None,timespan
     for p,path in paths.items():
         if verbose:
             print(path)
-        dd[p] = xr.open_mfdataset(path)    
+        dd[p] = xr.open_mfdataset(path)
+    if len(dd)==1:
+        dd=dd[experiments]
     return dd
 
 def dmget_exps(variable=None,ppname=None,override=False,experiments=None,timespan=None,verbose=False,wait=True):
@@ -92,10 +96,11 @@ def load_grid(fromwork=True,z=None,z_i=None):
     return grid
 
 def calc_anom(dd):
-    dd['zero'] = dd['_zero']-dd['_gat']
-    dd['double'] = dd['_double']-dd['_gat']
-    dd['noneq'] = dd['']-dd['_gat']
-    return dd
+    ddanom = {}
+    ddanom['zero'] = dd['_zero']-dd['_gat']
+    ddanom['double'] = dd['_double']-dd['_gat']
+    ddanom['noneq'] = dd['']-dd['_gat']
+    return ddanom
 
 def get_variable_dict():
     return {'alk':'ocean_bling_tracers',
@@ -134,13 +139,22 @@ def get_variable_dict():
           'o2_flux_alpha_ocn':'ocean_bling_ocn_flux',
           'o2_flux_csurf_ocn':'ocean_bling_ocn_flux',
           'o2_flux_flux_ice_ocn':'ocean_bling_ocn_flux',
-          'o2_flux_schmidt_ocn':'ocean_bling_ocn_flux',
-          'co2_flux':'bling_atm_flux',
-          'co2_flux_pcair_atm':'bling_atm_flux',
-          'o2_flux':'bling_atm_flux'}
+          'o2_flux_schmidt_ocn':'ocean_bling_ocn_flux'}
+
+# Atmospheric tracer flux grid behaving badly
+#           'co2_flux':'bling_atm_flux',
+#           'co2_flux_pcair_atm':'bling_atm_flux',
+#           'o2_flux':'bling_atm_flux'}
 
 def disp_variables():
-    return list(_get_variable_dict().keys())
+    return list(get_variable_dict().keys())
+
+def add_override_suffix(directory,override):
+    if override:
+        directory = directory+'override-po4/'
+    else:
+        directory = directory+'no-override/'
+    return directory
 
 
     
