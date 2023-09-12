@@ -36,9 +36,13 @@ def get_path(variable=None,ppname=None,override=False,experiments=None,timespan=
     if ppname == 'ocean_bling_tracers':
         ppname_pre = 'ocean_bling'
         ppname_suf = '_tracers'
-    elif ppname in ['ocean_bling_ocn_flux','bling_atm_flux']:
+    elif ppname in ['ocean_bling_ocn_flux','bling_atm_flux','ocean_gat_dic']:
         ppname_pre = ppname
         ppname_suf = ''
+        
+    # ocean_gat_dic has no non-gat control
+    if (ppname == 'ocean_gat_dic') & ('' in experiments):
+        experiments.remove('')
         
     paths = {}
     for e in experiments:
@@ -139,7 +143,15 @@ def get_variable_dict():
           'o2_flux_alpha_ocn':'ocean_bling_ocn_flux',
           'o2_flux_csurf_ocn':'ocean_bling_ocn_flux',
           'o2_flux_flux_ice_ocn':'ocean_bling_ocn_flux',
-          'o2_flux_schmidt_ocn':'ocean_bling_ocn_flux'}
+          'o2_flux_schmidt_ocn':'ocean_bling_ocn_flux',
+          'atm_gas_flux':'ocean_gat_dic',
+          'atm_gas_input':'ocean_gat_dic',
+          'atm_mol_wgt':'ocean_gat_dic',
+          'base_mix_ratio':'ocean_gat_dic',
+          'gas_mol_wgt':'ocean_gat_dic',
+          'mix_ratio':'ocean_gat_dic',
+          'total_atm_mass':'ocean_gat_dic',
+          'total_gas_mass':'ocean_gat_dic'}
 
 # Atmospheric tracer flux grid behaving badly
 #           'co2_flux':'bling_atm_flux',
